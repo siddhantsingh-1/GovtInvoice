@@ -5,7 +5,7 @@ import { isPlatform, IonToast } from "@ionic/react";
 import { EmailComposer } from "@ionic-native/email-composer";
 import { Printer } from "@ionic-native/printer";
 import { IonActionSheet, IonAlert } from "@ionic/react";
-import { saveOutline, save, mail, print } from "ionicons/icons";
+import { saveOutline, save, mail, print, cloud } from "ionicons/icons";
 
 const Menu: React.FC<{
   showM: boolean;
@@ -19,6 +19,8 @@ const Menu: React.FC<{
   const [showAlert2, setShowAlert2] = useState(false);
   const [showAlert3, setShowAlert3] = useState(false);
   const [showAlert4, setShowAlert4] = useState(false);
+  const [showAlert5, setShowAlert5] = useState(false);
+  const [showAlert6, setShowAlert6] = useState(false);
   const [showToast1, setShowToast1] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   /* Utility functions */
@@ -104,6 +106,34 @@ const Menu: React.FC<{
         // const data = { created: file.created, modified: file.modified, content: file.content, password: file.password };
         // console.log(JSON.stringify(data));
         props.store._saveFile(file);
+        const url = 'http://localhost:3000/api/v1/files';
+        const data = {
+            filename: filename,
+            content: content
+          };
+
+          const requestOptions = {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json', // Specify the content type as JSON
+            },
+            body: JSON.stringify(data), // Convert the data to JSON format
+          };
+
+        // Send the POST request
+        fetch(url, requestOptions)
+        .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json(); // Parse the response as JSON (if applicable)
+        })
+        .then(data => {
+        console.log('Response data:', data); // Handle the response data here
+        })
+        .catch(error => {
+        console.error('There was a problem with the fetch operation:', error);
+        });
         props.updateSelectedFile(filename);
         setShowAlert4(true);
       } else {
@@ -112,15 +142,33 @@ const Menu: React.FC<{
     }
   };
 
+  const doSaveCloud = async (filename) => {
+    // event.preventDefault();
+    if (filename) {
+      // console.log(filename, _validateName(filename));
+      if (await _validateName(filename)) {
+        // filename valid . go on save
+        
+        
+        // const data = { created: file.created, modified: file.modified, content: file.content, password: file.password };
+        // console.log(JSON.stringify(data));
+        props.updateSelectedFile(filename);
+        setShowAlert6(true);
+      } else {
+        setShowToast1(true);
+      }
+    }
+  };
+
   const sendEmail = () => {
-    if (isPlatform("hybrid")) {
+    if (true) {
       const emailComposer = EmailComposer;
       emailComposer.addAlias("gmail", "com.google.android.gm");
       const content = AppGeneral.getCurrentHTMLContent();
       // then use alias when sending email
       emailComposer.open({
         app: "mailto",
-        to: "geetanshu2502@gmail.com",
+        to: "sidvz21@gmail.com",
         cc: "erika@mustermann.de",
         bcc: ["john@doe.com", "jane@doe.com"],
         attachments: [],
@@ -130,6 +178,7 @@ const Menu: React.FC<{
       });
       console.log(AppGeneral.getCurrentHTMLContent());
     } else {
+        console.log("Hybrid Platform!")
       const mailgun = require("mailgun-js");
       const mg = mailgun({
         apiKey: "key-a128dfbe216c92500974c6d8ee1d4caa",
@@ -169,7 +218,7 @@ const Menu: React.FC<{
           },
           {
             text: "Save As",
-            icon: save,
+            icon: cloud,
             handler: () => {
               setShowAlert3(true);
               console.log("Save As clicked");
@@ -234,9 +283,9 @@ const Menu: React.FC<{
       />
       <IonAlert
         animated
-        isOpen={showAlert4}
-        onDidDismiss={() => setShowAlert4(false)}
-        header='Save As'
+        isOpen={showAlert6}
+        onDidDismiss={() => setShowAlert6(false)}
+        header='Save to Cloud'
         message={
           "File <strong>" +
           getCurrentFileName() +
